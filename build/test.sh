@@ -14,6 +14,9 @@ for file in $x; do
 done
 
 if [[ $i -eq 1 ]]; then
+	if [[ $(ls test/*.class 2>/dev/null | wc -l) -eq 0 ]]; then
+		./compileEverything.sh -;
+	fi
 	echo "Not sure what to do?";
 	echo "Try running \`./test.sh [file1] [file2] ...\` where the files are one of the following:"
 	x=`ls test/*.class`;
