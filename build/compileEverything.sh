@@ -1,4 +1,3 @@
-cd ~/Downloads/GarethSnakePro/build
 rm -rf */*.class
 rm SnakePro.jar
 javac -d . ../src/main/java/*/*.java

@@ -1,5 +1,5 @@
 x=$@
-if [ $x = "-all" ]; then
+if [[ $x = "-all" ]]; then
 	echo "Executing all tests.";
 	x="BoardCellTest SnakeProDataTest_AdvancePede SnakeProDataTest_CellInDir SnakeProDataTest_GetNextCellFromBFS SnakeProDataTest_Neighbors SnakeProDataTest_Reverse";
 fi
@@ -13,7 +13,7 @@ for file in $x; do
 	i=$((i + 1));
 done
 
-if [ $i -eq 1 ]; then
+if [[ $i -eq 1 ]]; then
 	echo "Not sure what to do?";
 	echo "Try running \`./test.sh [file1] [file2] ...\` where the files are one of the following:"
 	x=`ls test/*.class`;
