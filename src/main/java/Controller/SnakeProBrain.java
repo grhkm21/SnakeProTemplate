@@ -5,14 +5,21 @@ import Model.Preferences;
 import Model.SnakeProData;
 import View.SnakeProDisplay;
 
-import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowAdapter;
 import java.net.URL;
-import java.awt.*;
-import java.io.*;
 
-import javax.swing.*;
-import javax.sound.sampled.*;
-import javax.imageio.ImageIO;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.Timer;
 
 public class SnakeProBrain extends JFrame implements ActionListener, KeyListener {
 	public SnakeProDisplay draw;
@@ -21,7 +28,8 @@ public class SnakeProBrain extends JFrame implements ActionListener, KeyListener
 	public JButton pauseButton;
 	public JButton startButton;
 
-	private int cycleNum = 0;
+	private Timer timer;
+	private int cycleNum;
 
 	private static final char REVERSE = 'r';
 	private static final char UP      = 'i';
@@ -32,12 +40,19 @@ public class SnakeProBrain extends JFrame implements ActionListener, KeyListener
 	private static final char PLAY_FOOD_NOISE = 's';
 
 	public SnakeProBrain() {
-		this.draw = new SnakeProDisplay(600 + 10 * Preferences.CELL_SIZE, Preferences.GAMEBOARDHEIGHT);
+		draw = new SnakeProDisplay(Preferences.GAMEBOARDWIDTH, Preferences.GAMEBOARDHEIGHT);
 		addKeyListener(this);
 		setFocusable(true);
 		setFocusTraversalKeysEnabled(false);
+		draw.loadResources();
 
-		this.draw.loadResources();
+		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		this.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosed(WindowEvent e) {
+				timer.stop();
+			}
+		});
 	}
 
 	public static void main(String[] args) {
@@ -46,8 +61,8 @@ public class SnakeProBrain extends JFrame implements ActionListener, KeyListener
 				SnakeProBrain frame = new SnakeProBrain();
 				frame.setTitle("Testing!");
 				frame.setResizable(false);
-				frame.setSize(600 + 10 * Preferences.CELL_SIZE, Preferences.GAMEBOARDHEIGHT);
-				frame.setMinimumSize(new Dimension(600 + 10 * Preferences.CELL_SIZE, Preferences.GAMEBOARDHEIGHT));
+				frame.setSize(Preferences.GAMEBOARDWIDTH, Preferences.GAMEBOARDHEIGHT);
+				frame.setMinimumSize(new Dimension(Preferences.GAMEBOARDWIDTH, Preferences.GAMEBOARDHEIGHT));
 				frame.add(frame.draw);
 				frame.initializeButtons();
 				frame.pack();
@@ -56,51 +71,54 @@ public class SnakeProBrain extends JFrame implements ActionListener, KeyListener
 		});
 	}
 
-	// // Here is how buttons and menu items work...
+	// Here is how buttons and menu items work...
 	public void actionPerformed(ActionEvent evt) {
 		Object source = evt.getSource();
 
+		if (source == this.timer) {
+			this.cycle();
+		}
 		if (source == this.newGameButton) {
 			System.out.println("New game");
 			draw.startNewGame();
-			// this.go();
+			this.go();
 		}
 		if (source == this.pauseButton) {
 			System.out.println("Paused");
-			// this.pause();
+			this.pause();
 		}
 		if (source == this.startButton) {
 			System.out.println("Started");
-			// this.go();
+			this.go();
 		}
-		this.requestFocus(); // makes sure the Applet keeps keyboard focus
+		this.setVisible(true);
+		this.toFront();
+		this.requestFocus();
 	}
 
-	// Add all buttons
 	public void initializeButtons() {
-		// add a panel for buttons
 		JPanel buttonPane = new JPanel(new FlowLayout());
 		buttonPane.setBackground(Preferences.COLOR_BACKGROUND);
 		this.add(buttonPane, BorderLayout.PAGE_START);
 		
-		this.newGameButton = new JButton("New Game"); // the text in the button
-		this.newGameButton.addActionListener(this); // watch for button presses
-		this.newGameButton.addKeyListener(this); // listen for key presses here
-		buttonPane.add(this.newGameButton); // add button to the panel
+		this.newGameButton = new JButton("New Game");
+		this.newGameButton.addActionListener(this);
+		this.newGameButton.addKeyListener(this);
+		buttonPane.add(this.newGameButton);
 
-		this.pauseButton = new JButton("Pause"); // a second button
+		this.pauseButton = new JButton("Pause");
 		this.pauseButton.addActionListener(this);
 		this.pauseButton.addKeyListener(this);
 		buttonPane.add(this.pauseButton);
 
-		this.startButton = new JButton("Start"); // a third button
+		this.startButton = new JButton("Start");
 		this.startButton.addActionListener(this);
 		this.startButton.addKeyListener(this);
 		buttonPane.add(this.startButton);
 	}
 
 	public void keyPressed(KeyEvent e) {
-		// TODO: Implement this (other keys)
+		// TODO: Step 1d
 		switch (e.getKeyChar()) {
 			case REVERSE:
 				draw.reverseSnake();
@@ -141,21 +159,18 @@ public class SnakeProBrain extends JFrame implements ActionListener, KeyListener
 	}
 
 	public synchronized void go() {
-		// if (this.thread == null) {
-		// 	this.thread = new Thread(this);
-		// 	this.running = true;
-		// 	this.thread.start();
-		// 	this.threadSuspended = false;
-		// } else {
-		// 	this.threadSuspended = false;
-		// }
-		// this.notify(); // wakes up the call to wait(), above
+		cycleNum = 0;
+		timer = new Timer(Preferences.SLEEP_TIME, this);
+		timer.setRepeats(true);
+		timer.start();
+
+		draw.repaint();
 	}
 
 	public void pause() {
-		// if (this.thread != null) {
-		// 	this.threadSuspended = true;
-		// }
+		if (timer.isRunning()) {
+			timer.stop();
+		}
 	}
 
 	public synchronized void stop() {
@@ -166,6 +181,8 @@ public class SnakeProBrain extends JFrame implements ActionListener, KeyListener
 	public void cycle() {
 		// move the snake
 		if (this.cycleNum % Preferences.REFRESH_RATE == 0) {
+			System.out.println("Updated Snake [cycle " + String.valueOf(this.cycleNum) + "]");
+			System.out.println(draw.data.toString());
 			this.updateSnake();
 		}
 
@@ -177,6 +194,7 @@ public class SnakeProBrain extends JFrame implements ActionListener, KeyListener
 
 		// update the cycle counter
 		this.cycleNum ++;
+		// System.out.println("Cycle " + String.valueOf(this.cycleNum) + " finished.");
 	}
 
 	public void gameOver() {
@@ -195,29 +213,25 @@ public class SnakeProBrain extends JFrame implements ActionListener, KeyListener
 		this.advanceTheSnake(nextCell);
 	}
 
-	public void advanceTheSnake(BoardCell nextCell) {
+	private void advanceTheSnake(BoardCell nextCell) {
 		if (nextCell.isWall() || nextCell.isBody()) {
-			// Oops...we hit something.
 			this.gameOver();
 			return;
 		} else if (nextCell.isFood()) {
 			draw.playSound_foodEaten();
-			// TODO: Possibly add code here to tell draw 
-			//       the snake ate food!
-		} else {
-			// just regular movement into an open space
-			// TODO: Possibly add code to tell draw the snake moved
+			// TODO: Part 1c
+		} else if (nextCell.isOpen()) {
+			// TODO: Part 1c
 		}
-		// TODO: Possibly add code here too!
-		// You'll need to add helper methods to Model.SnakeProData.java
 	}
 
 	public void updateFood() {
 		if (draw.data.noFood()) {
 			draw.data.addFood();
-		} else if (this.cycleNum % Preferences.FOOD_ADD_RATE == 0) {
-			draw.data.addFood();
 		}
+		// else if (this.cycleNum % Preferences.FOOD_ADD_RATE == 0) {
+		// 	draw.data.addFood();
+		// }
 	}
 
 	public void keyReleased(KeyEvent e) {
@@ -230,6 +244,7 @@ public class SnakeProBrain extends JFrame implements ActionListener, KeyListener
 
 	// For testing only
 	public SnakeProBrain(TestGame gameNum) {
-		this.draw.data = SnakeProData.getTestGame(gameNum);
+		this();
+		draw.data = SnakeProData.getTestGame(gameNum);
 	}
 }

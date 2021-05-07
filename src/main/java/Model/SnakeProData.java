@@ -65,7 +65,7 @@ public class SnakeProData {
 		}
 	}
 
-	public void placeSnakeAtStartLocation() {
+	public void setStartLocation() {
 		BoardCell body = this.getCell(1, 1);
 		BoardCell head = this.getCell(1, 2);
 		this.snakeCells.addLast(body);
@@ -102,15 +102,18 @@ public class SnakeProData {
 	public void addFood() {
 		int row = (int) (this.getNumRows() * Math.random());
 		int col = (int) (this.getNumColumns() * Math.random());
+		this.addFood(row, col);
+	}
+
+	public void addFood(int row, int col) {
 		BoardCell cell = this.getCell(row, col);
 		
-		if (cell.isOpen()) { 
+		if (cell.isOpen()) {
 			cell.becomeFood();
 			foodCells.addLast(cell);
 		} else {
 			double totalSize = this.getNumColumns() * this.getNumRows();
-			double currentFreeSpots = this.freeSpots - this.snakeCells.size()
-					- this.foodCells.size();
+			double currentFreeSpots = this.freeSpots - this.snakeCells.size() - this.foodCells.size();
 			double ratioFree = currentFreeSpots / totalSize;
 			if (ratioFree < 0.2) {
 				System.err.println("Not adding more food");
@@ -120,9 +123,8 @@ public class SnakeProData {
 		}
 	}
 
-	// TODO: helper method for Controller.SnakeProBrain.advanceSnake
-
-	//
+	// TODO: Step 1c
+	// Add helper method for Controller.SnakeProBrain.advanceSnake
 
 	public BoardCell getNorthNeighbor(BoardCell cell) {
 		return this.getCell(cell.getRow() - 1, cell.getColumn());
@@ -141,23 +143,38 @@ public class SnakeProData {
 	}
 
 	public BoardCell getNorthNeighbor() {
-		return this.getNorthNeighbor(this.getSnakeHead());
+		// TODO: Part 1b
+		return null;
 	}
 
 	public BoardCell getSouthNeighbor() {
-		return this.getSouthNeighbor(this.getSnakeHead());
+		// TODO: Part 1b
+		return null;
 	}
 
 	public BoardCell getEastNeighbor() {
-		return this.getEastNeighbor(this.getSnakeHead());
+		// TODO: Part 1b
+		return null;
 	}
 
 	public BoardCell getWestNeighbor() {
-		return this.getWestNeighbor(this.getSnakeHead());
+		// TODO: Part 1b
+		return null;
 	}
 
 	public BoardCell getNextCellInDir() {
-		return null;  // TODO
+		switch (this.currentMode) {
+			case GOING_NORTH:
+				return this.getNorthNeighbor();
+			case GOING_SOUTH:
+				return this.getSouthNeighbor();
+			case GOING_EAST:
+				return this.getEastNeighbor();
+			case GOING_WEST:
+				return this.getWestNeighbor();
+			default:
+				return null;
+		}
 	}
 
 	public BoardCell[] getNeighbors(BoardCell center) {
@@ -292,7 +309,7 @@ public class SnakeProData {
 	}
 
 	private void testing_snakeAtStartLocation(TestGame gameNum) {
-		this.placeSnakeAtStartLocation();
+		this.setStartLocation();
 		if (gameNum == TestGame.G1) {
 			this.getCell(1, 3).becomeFood();
 		} else if (gameNum == TestGame.G2) {

@@ -4,18 +4,19 @@ import Model.BoardCell;
 import Model.Preferences;
 import Model.SnakeProData;
 
-import java.util.LinkedList;
-import java.awt.event.*;
-import java.util.Queue;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.io.File;
 import java.lang.Math;
 import java.net.URL;
-import java.awt.*;
-import java.io.*;
 
-import javax.swing.*;
-import javax.sound.sampled.*;
 import javax.imageio.ImageIO;
-
+import javax.sound.sampled.Clip;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.AudioInputStream;
+import javax.swing.JComponent;
 
 public class SnakeProDisplay extends JComponent {
 	public SnakeProData data = new SnakeProData();
@@ -23,11 +24,10 @@ public class SnakeProDisplay extends JComponent {
 	private Clip audioFood;
 	private Clip audioCrunch;
 	private Clip audioMeow;
+	private Image imageFood;
 
 	private int width;
 	private int height;
-
-	private Image imageFood;
 
 	public SnakeProDisplay(int width, int height) {
 		this.setPreferredSize(new Dimension(width, height));
@@ -44,19 +44,12 @@ public class SnakeProDisplay extends JComponent {
 		g.fillRect(0, 0, this.width, this.height);
 
 		// draw title
-		g.setFont(Preferences.TITLE_FONT);
-		g.setColor(Preferences.TITLE_COLOR);
-		g.drawString(Preferences.TITLE, Preferences.TITLE_X, Preferences.TITLE_Y);
+		// TODO: Part 1a
 
 		// draw board
 		for (int row = 0; row < data.getNumRows(); row ++) {
 			for (int col = 0; col < data.getNumColumns(); col ++) {
-				Color curColor = data.getCellColor(row, col);
-				g.setColor(curColor);
-				BoardCell curCell = data.getCell(row, col);
-				int cellX = col * Preferences.CELL_SIZE;
-				int cellY = row * Preferences.CELL_SIZE;
-				g.fillRect(cellX + 20, cellY + Preferences.TITLE_Y + 20, Preferences.CELL_SIZE, Preferences.CELL_SIZE);
+				// TODO: Part 1a
 			}
 		}
 	}
@@ -68,7 +61,8 @@ public class SnakeProDisplay extends JComponent {
 			AudioInputStream ais = AudioSystem.getAudioInputStream(cl.getResource(fileName));
 			clip.open(ais);
 			return clip;
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			e.printStackTrace();
 			return null;
 		}
@@ -76,13 +70,14 @@ public class SnakeProDisplay extends JComponent {
 
 	public void loadResources() {
 		try {
-			this.audioFood = getClip("resources/Food.au");
-			this.audioCrunch = getClip("resources/crunch.au");
-			this.audioMeow = getClip("resources/cat.au");
+			this.audioFood = getClip("resources/Food.wav");
+			this.audioCrunch = getClip("resources/crunch.wav");
+			this.audioMeow = getClip("resources/cat.wav");
 			this.imageFood = ImageIO.read(new File("resources/food.gif"));
 			System.out.println("successful loading of audio/images!\n");
 			System.out.flush();
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			System.out.println("problem loading audio/images!\n");
 			System.out.flush();
 			// e.printStackTrace();
@@ -95,9 +90,8 @@ public class SnakeProDisplay extends JComponent {
 
 	public void startNewGame() {
 		data = new SnakeProData();
-		data.placeSnakeAtStartLocation();
+		data.setStartLocation();
 		data.setStartDirection();
-		this.repaint();
 	}
 
 	public static void playClip(Clip clip) {

@@ -12,8 +12,9 @@ public final class Preferences {
 	public static final int NUM_CELLS_TALL = 30;
 	public static final int CELL_SIZE = 10;
 	public static final int SPACE_FOR_BUTTONS = 190;
+	public static final int CELLS_BUFFER = 60;
 	public static final int GAMEBOARDHEIGHT = NUM_CELLS_TALL * CELL_SIZE + SPACE_FOR_BUTTONS;
-	public static final int GAMEBOARDWIDTH = NUM_CELLS_WIDE * CELL_SIZE;
+	public static final int GAMEBOARDWIDTH = NUM_CELLS_WIDE * CELL_SIZE + CELLS_BUFFER;
 
 	public static final Color COLOR_BACKGROUND = new Color(245, 214, 76);
 	public static final Color COLOR_WALL = Color.BLUE;

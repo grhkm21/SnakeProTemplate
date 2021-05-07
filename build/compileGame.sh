@@ -1,3 +1,4 @@
+cd $(dirname ${BASH_SOURCE[0]});
 rm -rf */*.class;
 rm SnakePro.jar;
 javac -d . ../src/main/java/*/*.java;
