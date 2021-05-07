@@ -1,13 +1,6 @@
 cd $(cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd);
 
-<<<<<<< HEAD
 ./compileEverything.sh -;
-=======
-if [[ $(ls test/*.class 2>/dev/null | wc -l) -eq 0 ]]; then
-	echo "No compiled tests found. Compiling everything...";
-	./compileEverything.sh -;
-fi
->>>>>>> c5db623507a54dfd6f2f5b96674b81acb913cbe4
 
 x=$@
 if [[ $x = "-all" ]]; then
