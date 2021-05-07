@@ -43,14 +43,20 @@ public class SnakeProDisplay extends JComponent {
 		g.setColor(Preferences.COLOR_BACKGROUND);
 		g.fillRect(0, 0, this.width, this.height);
 
-		// draw title
-		// TODO: Part 1a
-
 		// draw board
 		for (int row = 0; row < data.getNumRows(); row ++) {
 			for (int col = 0; col < data.getNumColumns(); col ++) {
 				// TODO: Part 1a
 			}
+		}
+
+		// draw title
+		// TODO: Part 1a
+
+		// draw "game over" text
+		// TODO: Part 1f
+		if (data.getGameOver()) {
+
 		}
 	}
 
