@@ -82,11 +82,9 @@ public class SnakeProDisplay extends JComponent {
 			this.imageFood = ImageIO.read(new File("resources/food.gif"));
 			System.out.println("successful loading of audio/images!\n");
 			System.out.flush();
-		}
-		catch (Exception e) {
+		} catch (Exception e) {
 			System.out.println("problem loading audio/images!\n");
 			System.out.flush();
-			// e.printStackTrace();
 			this.audioFood = null;
 			this.audioCrunch = null;
 			this.audioMeow = null;

@@ -134,37 +134,13 @@ public class SnakeProBrain extends JFrame implements ActionListener, KeyListener
 		}
 	}
 
-	// Thread thread; // the thread controlling the updates
-	// boolean threadSuspended; // whether or not the thread is suspended
-	// boolean running; // whether or not the thread is stopped
+	public void go() {
+        cycleNum = 0;
+        timer = new Timer(Preferences.SLEEP_TIME, this);
+        timer.setRepeats(true);
+        timer.start();
 
-	public void run() {
-		// while (this.running) {
-		// 	try {
-		// 		if (this.thread != null) {
-		// 			Thread.sleep(Preferences.SLEEP_TIME);
-		// 			synchronized (this) {
-		// 				while (this.threadSuspended) {
-		// 					this.wait(); // sleeps until notify() wakes it up
-		// 				}
-		// 			}
-		// 		}
-		// 	} catch (InterruptedException e) {
-		// 		;
-		// 	}
-
-		// 	this.cycle(); // this represents 1 update cycle for the environment
-		// }
-		// this.thread = null;
-	}
-
-	public synchronized void go() {
-		cycleNum = 0;
-		timer = new Timer(Preferences.SLEEP_TIME, this);
-		timer.setRepeats(true);
-		timer.start();
-
-		draw.repaint();
+        draw.repaint();
 	}
 
 	public void pause() {
@@ -173,28 +149,13 @@ public class SnakeProBrain extends JFrame implements ActionListener, KeyListener
 		}
 	}
 
-	public synchronized void stop() {
-		// this.running = false;
-		// this.notify();
-	}
-
 	public void cycle() {
-		// move the snake
 		if (this.cycleNum % Preferences.REFRESH_RATE == 0) {
-			System.out.println("Updated Snake [cycle " + String.valueOf(this.cycleNum) + "]");
-			System.out.println(draw.data.toString());
 			this.updateSnake();
 		}
-
-		// update the list of Food
 		this.updateFood();
-
-		// draw the board
 		draw.repaint();
-
-		// update the cycle counter
 		this.cycleNum ++;
-		// System.out.println("Cycle " + String.valueOf(this.cycleNum) + " finished.");
 	}
 
 	public void gameOver() {
@@ -228,10 +189,9 @@ public class SnakeProBrain extends JFrame implements ActionListener, KeyListener
 	public void updateFood() {
 		if (draw.data.noFood()) {
 			draw.data.addFood();
+		} else if (this.cycleNum % Preferences.FOOD_ADD_RATE == 0) {
+			draw.data.addFood();
 		}
-		// else if (this.cycleNum % Preferences.FOOD_ADD_RATE == 0) {
-		// 	draw.data.addFood();
-		// }
 	}
 
 	public void keyReleased(KeyEvent e) {

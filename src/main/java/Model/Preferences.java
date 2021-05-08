@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Font;
 
 public final class Preferences {
+	// TODO: Step 1g
 	public static final int REFRESH_RATE = 2;
 	public static final int FOOD_ADD_RATE = 25;
 	public static final int SLEEP_TIME = 30; // milliseconds between updates
