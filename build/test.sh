@@ -1,13 +1,12 @@
-cd $(dirname ${BASH_SOURCE[0]});
-
+cd $(dirname "${BASH_SOURCE[0]}");
 ./compileEverything.sh -;
 
-x=$@
+x=$@;
 if [[ $x = "-all" ]]; then
 	echo "Executing all tests.";
 	x=`ls test/*.class | sed -e "s/test\///" | sed -e "s/.class//"`;
 fi
-echo $x
+echo $x;
 
 i=1;
 for file in $x; do
