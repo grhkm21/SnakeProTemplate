@@ -5,6 +5,7 @@ import java.awt.Color;
 import java.awt.Font;
 
 public final class Preferences {
+<<<<<<< HEAD
 
 	public static final char REVERSE         = 'r';
 	public static final char UP              = 'i';
@@ -28,6 +29,20 @@ public final class Preferences {
 	public static final int USER_SLEEP_TIME = 45; // milliseconds between updates
 	public static final int SNAKES = 4;
 	public static final int START_LENGTH = 2;
+=======
+	// TODO: Step 1g
+	public static final int REFRESH_RATE = 2;
+	public static final int FOOD_ADD_RATE = 25;
+	public static final int SLEEP_TIME = 30; // milliseconds between updates
+
+	public static final int NUM_CELLS_WIDE = 50;
+	public static final int NUM_CELLS_TALL = 30;
+	public static final int CELL_SIZE = 10;
+	public static final int SPACE_FOR_BUTTONS = 190;
+	public static final int CELLS_BUFFER = 60;
+	public static final int GAMEBOARDHEIGHT = NUM_CELLS_TALL * CELL_SIZE + SPACE_FOR_BUTTONS;
+	public static final int GAMEBOARDWIDTH = NUM_CELLS_WIDE * CELL_SIZE + CELLS_BUFFER;
+>>>>>>> 4a7f241022243d75c22b72dcf552ca46d2f00e48
 
 	public static final Color COLOR_BACKGROUND = new Color(0xF5E8DA);
 	public static final Color COLOR_BUTTON = Color.ORANGE;

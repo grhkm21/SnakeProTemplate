@@ -358,7 +358,8 @@ public class SnakeProDisplay extends JComponent {
 			AudioInputStream ais = AudioSystem.getAudioInputStream(cl.getResource(fileName));
 			clip.open(ais);
 			return clip;
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			e.printStackTrace();
 			return null;
 		}

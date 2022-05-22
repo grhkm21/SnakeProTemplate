@@ -8,13 +8,20 @@ import Model.CustomButton;
 import Model.SnakeProData;
 import View.SnakeProDisplay;
 
+<<<<<<< HEAD
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+=======
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+>>>>>>> 4a7f241022243d75c22b72dcf552ca46d2f00e48
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+<<<<<<< HEAD
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.URL;
@@ -29,6 +36,16 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 import javax.swing.UIManager;
+=======
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowAdapter;
+import java.net.URL;
+
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.Timer;
+>>>>>>> 4a7f241022243d75c22b72dcf552ca46d2f00e48
 
 public class SnakeProBrain extends JFrame implements ActionListener, KeyListener {
 	public SnakeProDisplay draw;
@@ -41,16 +58,39 @@ public class SnakeProBrain extends JFrame implements ActionListener, KeyListener
 	private CustomButton scoresLabel;
 	private JPanel buttonPanel;
 
+<<<<<<< HEAD
 	private boolean receivedInstructions = false;
+=======
+	private Timer timer;
+	private int cycleNum;
+>>>>>>> 4a7f241022243d75c22b72dcf552ca46d2f00e48
 
 	private Timer userTimer;
 	private Timer bfsTimer;
 	private Timer wallTimer;
 	private int cycleNum;
 
+<<<<<<< HEAD
 	private Timer typeTimer;
 
 	private ArrayList<Character> allowed = new ArrayList<Character>();
+=======
+	public SnakeProBrain() {
+		draw = new SnakeProDisplay(Preferences.GAMEBOARDWIDTH, Preferences.GAMEBOARDHEIGHT);
+		addKeyListener(this);
+		setFocusable(true);
+		setFocusTraversalKeysEnabled(false);
+		draw.loadResources();
+
+		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		this.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosed(WindowEvent e) {
+				timer.stop();
+			}
+		});
+	}
+>>>>>>> 4a7f241022243d75c22b72dcf552ca46d2f00e48
 
 	public static void main(String[] args) {
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
@@ -59,6 +99,12 @@ public class SnakeProBrain extends JFrame implements ActionListener, KeyListener
 				frame.setTitle("Testing!");
 				frame.setLayout(new BoxLayout(frame.getContentPane(), BoxLayout.Y_AXIS));
 				frame.setResizable(false);
+<<<<<<< HEAD
+=======
+				frame.setSize(Preferences.GAMEBOARDWIDTH, Preferences.GAMEBOARDHEIGHT);
+				frame.setMinimumSize(new Dimension(Preferences.GAMEBOARDWIDTH, Preferences.GAMEBOARDHEIGHT));
+				frame.add(frame.draw);
+>>>>>>> 4a7f241022243d75c22b72dcf552ca46d2f00e48
 				frame.initializeButtons();
 				frame.add(frame.draw);
 				frame.getRootPane().setBorder(
@@ -69,6 +115,7 @@ public class SnakeProBrain extends JFrame implements ActionListener, KeyListener
 		});
 	}
 
+<<<<<<< HEAD
 	public SnakeProBrain() {
 		// in the code below, all this.draw will be referenced as draw
 		this.draw = new SnakeProDisplay(GAMEBOARD_WIDTH, SPACE_FOR_LABELS + GAMEBOARD_HEIGHT);
@@ -126,6 +173,27 @@ public class SnakeProBrain extends JFrame implements ActionListener, KeyListener
 			voronoiButton.setText("Voronoi: " + (draw.getVoronoi() ? "ON" : "OFF"));
 		} else {
 			System.out.println("Source " + source.toString() + " not recognised. Maybe it is not suppported?");
+=======
+	// Here is how buttons and menu items work...
+	public void actionPerformed(ActionEvent evt) {
+		Object source = evt.getSource();
+
+		if (source == this.timer) {
+			this.cycle();
+		}
+		if (source == this.newGameButton) {
+			System.out.println("New game");
+			draw.startNewGame();
+			this.go();
+		}
+		if (source == this.pauseButton) {
+			System.out.println("Paused");
+			this.pause();
+		}
+		if (source == this.startButton) {
+			System.out.println("Started");
+			this.go();
+>>>>>>> 4a7f241022243d75c22b72dcf552ca46d2f00e48
 		}
 		this.setVisible(true);
 		this.toFront();
@@ -133,6 +201,7 @@ public class SnakeProBrain extends JFrame implements ActionListener, KeyListener
 	}
 
 	public void initializeButtons() {
+<<<<<<< HEAD
 		buttonPanel = new JPanel(new GridLayout(2, 3));
 		buttonPanel.setPreferredSize(new Dimension(GAMEBOARD_WIDTH, SPACE_FOR_BUTTONS));
 		buttonPanel.setLocation(CELLS_BUFFER, 0);
@@ -178,6 +247,30 @@ public class SnakeProBrain extends JFrame implements ActionListener, KeyListener
 		if (receivedInstructions && userTimer.isRunning()) {
 			return;
 		}
+=======
+		JPanel buttonPane = new JPanel(new FlowLayout());
+		buttonPane.setBackground(Preferences.COLOR_BACKGROUND);
+		this.add(buttonPane, BorderLayout.PAGE_START);
+		
+		this.newGameButton = new JButton("New Game");
+		this.newGameButton.addActionListener(this);
+		this.newGameButton.addKeyListener(this);
+		buttonPane.add(this.newGameButton);
+
+		this.pauseButton = new JButton("Pause");
+		this.pauseButton.addActionListener(this);
+		this.pauseButton.addKeyListener(this);
+		buttonPane.add(this.pauseButton);
+
+		this.startButton = new JButton("Start");
+		this.startButton.addActionListener(this);
+		this.startButton.addKeyListener(this);
+		buttonPane.add(this.startButton);
+	}
+
+	public void keyPressed(KeyEvent e) {
+		// TODO: Step 1d
+>>>>>>> 4a7f241022243d75c22b72dcf552ca46d2f00e48
 		switch (e.getKeyChar()) {
 			case NEW_GAME:
 				draw.startNewGame();
@@ -266,6 +359,7 @@ public class SnakeProBrain extends JFrame implements ActionListener, KeyListener
 		}
 	}
 
+<<<<<<< HEAD
 	public void keyTyped(KeyEvent e) {
 		if (!isValid(e.getKeyChar())) {
 			return;
@@ -343,6 +437,29 @@ public class SnakeProBrain extends JFrame implements ActionListener, KeyListener
 		}
 		this.updateFood();
 		draw.repaint();
+=======
+	public void go() {
+        cycleNum = 0;
+        timer = new Timer(Preferences.SLEEP_TIME, this);
+        timer.setRepeats(true);
+        timer.start();
+
+        draw.repaint();
+	}
+
+	public void pause() {
+		if (timer.isRunning()) {
+			timer.stop();
+		}
+	}
+
+	public void cycle() {
+		if (this.cycleNum % Preferences.REFRESH_RATE == 0) {
+			this.updateSnake();
+		}
+		this.updateFood();
+		draw.repaint();
+>>>>>>> 4a7f241022243d75c22b72dcf552ca46d2f00e48
 		this.cycleNum ++;
 		scoresLabel.setText(draw.data.getScores());
 	}
@@ -371,6 +488,7 @@ public class SnakeProBrain extends JFrame implements ActionListener, KeyListener
 		this.advanceSnake(snakeID, nextCell);
 	}
 
+<<<<<<< HEAD
 	public void advanceSnake(int snakeID, BoardCell nextCell) {
 		if (nextCell.isWall() || nextCell.isBody()) {
 			this.gameOver(snakeID);
@@ -380,6 +498,17 @@ public class SnakeProBrain extends JFrame implements ActionListener, KeyListener
 			draw.data.growSnake(snakeID, nextCell);
 		} else {
 			draw.data.shiftSnake(snakeID, nextCell);
+=======
+	private void advanceTheSnake(BoardCell nextCell) {
+		if (nextCell.isWall() || nextCell.isBody()) {
+			this.gameOver();
+			return;
+		} else if (nextCell.isFood()) {
+			draw.playSound_foodEaten();
+			// TODO: Part 1c
+		} else if (nextCell.isOpen()) {
+			// TODO: Part 1c
+>>>>>>> 4a7f241022243d75c22b72dcf552ca46d2f00e48
 		}
 	}
 
