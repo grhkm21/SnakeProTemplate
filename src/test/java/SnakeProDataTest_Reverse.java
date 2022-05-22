@@ -12,29 +12,29 @@ public class SnakeProDataTest_Reverse {
 	@Test
 	public void test_ReverseNorth() {
 		SnakeProData display = SnakeProData.getTestGame(TestGame.G14);
-		display.revSnake();
-		BoardCell nextCell = display.getNextCellInDir();
+		display.reverseSnake(0);
+		BoardCell nextCell = display.getNextCellInDir(0);
 		assertEquals("[1, 2,  ]", nextCell.toString());
 	}
 	@Test
 	public void test_ReverseSouth() {
 		SnakeProData display = SnakeProData.getTestGame(TestGame.G13);
-		display.revSnake();
-		BoardCell nextCell = display.getNextCellInDir();
+		display.reverseSnake(0);
+		BoardCell nextCell = display.getNextCellInDir(0);
 		assertEquals("[4, 2,  ]", nextCell.toString());
 	}
 	@Test
 	public void test_ReverseEast() {
 		SnakeProData display = SnakeProData.getTestGame(TestGame.G12);
-		display.revSnake();
-		BoardCell nextCell = display.getNextCellInDir();
+		display.reverseSnake(0);
+		BoardCell nextCell = display.getNextCellInDir(0);
 		assertEquals("[2, 4,  ]", nextCell.toString());
 	}
 	@Test
 	public void test_ReverseWest() {
 		SnakeProData display = SnakeProData.getTestGame(TestGame.G15);
-		display.revSnake();
-		BoardCell nextCell = display.getNextCellInDir();
+		display.reverseSnake(0);
+		BoardCell nextCell = display.getNextCellInDir(0);
 		assertEquals("[3, 1,  ]", nextCell.toString());
 	}
 

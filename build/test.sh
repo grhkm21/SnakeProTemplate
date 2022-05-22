@@ -1,8 +1,12 @@
-x=$@
+cd $(dirname "${BASH_SOURCE[0]}");
+./compileEverything.sh -;
+
+x=$@;
 if [[ $x = "-all" ]]; then
 	echo "Executing all tests.";
-	x="BoardCellTest SnakeProDataTest_AdvancePede SnakeProDataTest_CellInDir SnakeProDataTest_GetNextCellFromBFS SnakeProDataTest_Neighbors SnakeProDataTest_Reverse";
+	x=`ls test/*.class | sed -e "s/test\///" | sed -e "s/.class//"`;
 fi
+echo $x;
 
 i=1;
 for file in $x; do
@@ -18,7 +22,7 @@ if [[ $i -eq 1 ]]; then
 		./compileEverything.sh -;
 	fi
 	echo "Not sure what to do?";
-	echo "Try running \`./test.sh [file1] [file2] ...\` where the files are one of the following:"
+	echo "Try running \`./test.sh -all\` or \`./test.sh [file1] [file2] ...\` where the files are one of the following:"
 	x=`ls test/*.class`;
 	for file in $x; do
 		prefix="test/";

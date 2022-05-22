@@ -9,7 +9,7 @@ public class SnakeProDataTest_AdvancePede {
 	@Test
 	public void test_eatFood() {
 		SnakeProBrain brain = new SnakeProBrain(TestGame.G1);
-		brain.updateSnake();
+		brain.updateSnake(0);
 		String boardString = brain.draw.data.toString();
 		String correctBoardString = "******\n" + "*BBH *\n" + "*    *\n"
 				+ "*    *\n" + "*    *\n" + "******\n";
@@ -24,8 +24,8 @@ public class SnakeProDataTest_AdvancePede {
 	
 	@Test
 	public void test_noFoodEaten() {
-		SnakeProBrain brain = new SnakeProBrain(TestGame.G1);
-		brain.updateSnake();
+		SnakeProBrain brain = new SnakeProBrain(TestGame.G2);
+		brain.updateSnake(0);
 		String boardString = brain.draw.data.toString();
 		String correctBoardString = "******\n" + "* BH *\n" + "* X  *\n"
 				+ "*    *\n" + "*    *\n" + "******\n";

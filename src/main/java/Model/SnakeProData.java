@@ -1,96 +1,221 @@
 package Model;
 
+import static Model.CellType.*;
+import static Model.Preferences.*;
+import static Model.SnakeMode.*;
+
 import Controller.TestGame;
 import Model.BoardCell;
 import Model.CellType;
-import Model.Preferences;
 import Model.SnakeMode;
 
 import java.awt.Color;
 import java.lang.Math;
-import java.util.Queue;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Queue;
 
 public class SnakeProData {
 	private BoardCell[][] boardCells2D;
 	private int freeSpots = 0;
-	private SnakeMode currentMode = SnakeMode.GOING_EAST;
+	private boolean isWrap = true;
+	private ArrayList<BoardCell> target = new ArrayList<BoardCell>();
+	private ArrayList<BoardCell> nextMove = new ArrayList<BoardCell>();
+	private ArrayList<Boolean> nextMoveBFS = new ArrayList<Boolean>();
+	public ArrayList<SnakeMode> currentMode = new ArrayList<SnakeMode>();
 	private LinkedList<BoardCell> foodCells = new LinkedList<BoardCell>();
-	private LinkedList<BoardCell> snakeCells = new LinkedList<BoardCell>();
-	private boolean gameOver = false;
+	private ArrayList<LinkedList<BoardCell>> snakeCells = new ArrayList<LinkedList<BoardCell>>();
+	private ArrayList<Integer> scores = new ArrayList<Integer>();
+	private ArrayList<Boolean> gameOver = new ArrayList<Boolean>();
+	private String typedCode = "";
+	private boolean rainbowCheat = false;
 
-	// Mapping between direction (names) and keys
-	private static final char REVERSE = 'r';
-	private static final char UP      = 'i';
-	private static final char DOWN    = 'k';
-	private static final char LEFT    = 'j';
-	private static final char RIGHT   = 'l';
-	private static final char AI_MODE = 'a';
-	private static final char PLAY_FOOD_NOISE = 's';
+	/*
+		TODO:
+		- Score label
+		- Draw own label (Instead of JButton cuz they look bad)
+		- Other game modes (random)
+		- Make everything customisable (different window or popup window?)
+			- Create CustomButton class
+			- Create map<String, CustomButton> to access/create buttons and listen
+			- Make method to add CustomButton
+			- CustomButton should allow different types of prompt
+			- Type sanitisation (integers, colors, font)
+			- Align place
+			 
+		- Paused label
+		- circle cells? remove border if two cells adjacent? -> settings styles?
+		- Portals
+		- Types of food (more score? decrease length?)
+		- Speed pads (speed up slow down)
+		- Leaderboard
+		- Number of lives
+		- Voronoi Diagram
+
+		DONE:
+		- Layout (GridLayout, BoxLayout)
+		- Better cells
+		- Scale window to board size
+		> Added color interpolation
+		- BFS/DFS AI mode
+		- Add enemy
+			- play until die, compare final score
+			- no time limit
+			- DONT REMOVE THE SNAKE AFTER DEATH
+		> executable file
+		- show BFS path
+		- cheat codes (1973208)
+	*/
 
 	public SnakeProData() {
-		int height = Preferences.NUM_CELLS_TALL;
-		int width = Preferences.NUM_CELLS_WIDE;
-		this.boardCells2D = new BoardCell[height][width];
+		this.boardCells2D = new BoardCell[NUM_CELLS_TALL][NUM_CELLS_WIDE];
+		this.currentMode = new ArrayList<SnakeMode>();
+		this.snakeCells = new ArrayList<LinkedList<BoardCell>>();
+		this.scores = new ArrayList<Integer>();
+		this.target = new ArrayList<BoardCell>();
+		this.gameOver = new ArrayList<Boolean>();
+		this.nextMove = new ArrayList<BoardCell>();
+		this.nextMoveBFS = new ArrayList<Boolean>();
+		for (int snakeID = 0; snakeID < SNAKES; snakeID ++) {
+			if (snakeID == 0) {
+				this.currentMode.add(GOING_EAST);
+			} else if (snakeID == 1) {
+				this.currentMode.add(RANDOM_MODE);
+			} else {
+				this.currentMode.add(BFS_MODE);
+			}
+			this.snakeCells.add(new LinkedList<BoardCell>());
+			this.scores.add(0);
+			this.target.add(new BoardCell(-1, -1, OPEN));
+			this.gameOver.add(false);
+			this.nextMove.add(null);
+			this.nextMoveBFS.add(false);
+		}
 		this.addWalls();
 		this.fillRemainingCells();
 	}
 
 	private void addWalls() {
-		int height = this.getNumRows();
-		int width = this.getNumColumns();
-
-		for (int row = 0; row < height; row++) {
-			this.boardCells2D[row][0] = new BoardCell(row, 0, CellType.WALL);
-			this.boardCells2D[row][width - 1] = new BoardCell(row, width - 1, CellType.WALL);
+		int cnt = 0;
+		for (int col = 0; col < getNumCols() - 1; col ++) {
+			this.boardCells2D[0][col] = new BoardCell(0, col, WALL, cnt);
+			cnt ++;
 		}
-		for (int column = 0; column < width; column++) {
-			this.boardCells2D[0][column] = new BoardCell(0, column, CellType.WALL);
-			this.boardCells2D[height - 1][column] = new BoardCell(height - 1, column, CellType.WALL);
+		for (int row = 0; row < getNumRows() - 1; row ++) {
+			this.boardCells2D[row][getNumCols() - 1] = new BoardCell(row, getNumCols() - 1, WALL, cnt);
+			cnt ++;
+		}
+		for (int col = getNumCols() - 1; col > 0; col --) {
+			this.boardCells2D[getNumRows() - 1][col] = new BoardCell(getNumRows() - 1, col, WALL, cnt);
+			cnt ++;
+		}
+		for (int row = getNumRows() - 1; row > 0; row --) {
+			this.boardCells2D[row][0] = new BoardCell(row, 0, WALL, cnt);
+			cnt ++;
 		}
 	}
 
 	private void fillRemainingCells() {
 		int height = this.getNumRows();
-		int width = this.getNumColumns();
+		int width = this.getNumCols();
 
 		this.freeSpots = 0;
 		for (int row = 0; row < height; row++) {
-			for (int column = 0; column < width; column++) {
-				if (this.boardCells2D[row][column] == null) {
-					this.boardCells2D[row][column] = new BoardCell(row, column, CellType.OPEN);
+			for (int col = 0; col < width; col++) {
+				if (this.boardCells2D[row][col] == null) {
+					this.boardCells2D[row][col] = new BoardCell(row, col, OPEN);
 					this.freeSpots++;
 				}
 			}
 		}
 	}
 
-	public void placeSnakeAtStartLocation() {
-		BoardCell body = this.getCell(1, 1);
-		BoardCell head = this.getCell(1, 2);
-		this.snakeCells.addLast(body);
-		this.snakeCells.addLast(head);
-		head.becomeHead();
-		body.becomeBody();
+	public void setStartLocation(int snakeID) {
+		this.snakeCells.set(snakeID, new LinkedList<BoardCell>());
+		if (snakeID == 0) {
+			for (int index = 1; index < START_LENGTH; index ++) {
+				BoardCell body = this.getCell(1, index);
+				body.becomeBody(snakeID);
+				this.snakeCells.get(snakeID).addLast(body);
+			}
+			BoardCell head = this.getCell(1, START_LENGTH);
+			head.becomeHead(snakeID);
+			this.snakeCells.get(snakeID).addLast(head);
+		} else if (snakeID == 1) {
+			for (int index = 1; index < START_LENGTH; index ++) {
+				BoardCell body = this.getCell(this.getNumRows() - 2, this.getNumCols() - index - 1);
+				body.becomeBody(snakeID);
+				this.snakeCells.get(snakeID).addLast(body);
+			}
+			BoardCell head = this.getCell(this.getNumRows() - 2, this.getNumCols() - START_LENGTH - 1);
+			head.becomeHead(snakeID);
+			this.snakeCells.get(snakeID).addLast(head);
+		} else if (snakeID == 2) {
+			for (int index = 1; index < START_LENGTH; index ++) {
+				BoardCell body = this.getCell(index, this.getNumCols() - 2);
+				body.becomeBody(snakeID);
+				this.snakeCells.get(snakeID).addLast(body);
+			}
+			BoardCell head = this.getCell(START_LENGTH, this.getNumCols() - 2);
+			head.becomeHead(snakeID);
+			this.snakeCells.get(snakeID).addLast(head);
+		} else if (snakeID == 3) {
+			for (int index = 1; index < START_LENGTH; index ++) {
+				BoardCell body = this.getCell(this.getNumRows() - index - 1, 1);
+				body.becomeBody(snakeID);
+				this.snakeCells.get(snakeID).addLast(body);
+			}
+			BoardCell head = this.getCell(this.getNumRows() - START_LENGTH - 1, 1);
+			head.becomeHead(snakeID);
+			this.snakeCells.get(snakeID).addLast(head);
+		}
 	}
 
-	public boolean inAImode() {
-		return this.currentMode == SnakeMode.AI_MODE;
+	public int getScore(int snakeID) {
+		return this.scores.get(snakeID);
+	}
+
+	public boolean inBFSMode(int snakeID) {
+		return this.currentMode.get(snakeID) == SnakeMode.BFS_MODE;
+	}
+
+	public boolean inRandomMode(int snakeID) {
+		return this.currentMode.get(snakeID) == SnakeMode.RANDOM_MODE;
 	}
 
 	public int getNumRows() {
 		return this.boardCells2D.length;
 	}
 
-	public int getNumColumns() {
+	public int getNumCols() {
 		return this.boardCells2D[0].length;
 	}
 
+	public int getSnakeLength(int snakeID) {
+		return this.snakeCells.get(snakeID).size();
+	}
+
 	public BoardCell getCell(int row, int col) {
-		if (row >= this.getNumRows() || col >= this.getNumColumns() || row < 0 || col < 0) {
-			System.err.println("Trying to access cell outside of the Board:");
-			System.err.println("row: " + row + " col: " + col);
-			System.exit(0);
+		// https://docs.oracle.com/javase/8/docs/api/java/lang/Math.html#floorMod-int-int-
+		// map row to [1, getNumRows() - 1], col to [1, getNumCols() - 1]
+		if (isWrap) {
+			row = Math.floorMod(row - 1, getNumRows() - 2) + 1;
+			col = Math.floorMod(col - 1, getNumCols() - 2) + 1;
+		}
+		if (row >= this.getNumRows() || col >= this.getNumCols() || row < 0 || col < 0) {
+			// System.out.println(String.format("Trying to access cell outside of the Board: (row, col) = (%d, %d)", row, col));
+			return null;
+		}
+		return this.boardCells2D[row][col];
+	}
+
+	public BoardCell getNoWrapCell(int row, int col) {
+		if (row >= this.getNumRows() || col >= this.getNumCols() || row < 0 || col < 0) {
+			// System.out.println(String.format("Trying to access cell outside of the Board: (row, col) = (%d, %d)", row, col));
+			return null;
 		}
 		return this.boardCells2D[row][col];
 	}
@@ -101,16 +226,20 @@ public class SnakeProData {
 
 	public void addFood() {
 		int row = (int) (this.getNumRows() * Math.random());
-		int col = (int) (this.getNumColumns() * Math.random());
+		int col = (int) (this.getNumCols() * Math.random());
+		this.addFood(row, col);
+	}
+
+	public void addFood(int row, int col) {
 		BoardCell cell = this.getCell(row, col);
 		
-		if (cell.isOpen()) { 
+		if (cell.isOpen()) {
 			cell.becomeFood();
 			foodCells.addLast(cell);
+			// resetTargets();
 		} else {
-			double totalSize = this.getNumColumns() * this.getNumRows();
-			double currentFreeSpots = this.freeSpots - this.snakeCells.size()
-					- this.foodCells.size();
+			double totalSize = this.getNumCols() * this.getNumRows();
+			double currentFreeSpots = this.freeSpots - this.snakeCells.size() - this.foodCells.size();
 			double ratioFree = currentFreeSpots / totalSize;
 			if (ratioFree < 0.2) {
 				System.err.println("Not adding more food");
@@ -120,96 +249,157 @@ public class SnakeProData {
 		}
 	}
 
-	// TODO: helper method for Controller.SnakeProBrain.advanceSnake
+	private void resetTargets() {
+		target = new ArrayList<BoardCell>();
+		nextMoveBFS = new ArrayList<Boolean>();
+		for (int snakeID = 0; snakeID < SNAKES; snakeID ++) {
+			this.target.add(new BoardCell(-1, -1, OPEN));
+			this.nextMoveBFS.add(false);
+		}
+	}
 
-	//
+	// Helper method for Controller.SnakeProBrain.advanceSnake
+	public void growSnake(int snakeID, BoardCell nextCell) {
+		for (int i = 0; i < foodCells.size(); i ++) {
+			if (foodCells.get(i).equals(nextCell)) {
+				foodCells.remove(i);
+				break;
+			}
+		}
+		this.getSnakeHead(snakeID).becomeBody(snakeID);
+		nextCell.becomeHead(snakeID);
+		snakeCells.get(snakeID).addLast(nextCell);
+		scores.set(snakeID, scores.get(snakeID) + 1);
+	}
+
+	public void shiftSnake(int snakeID, BoardCell nextCell) {
+		this.getSnakeHead(snakeID).becomeBody(snakeID);
+		nextCell.becomeHead(snakeID);
+		snakeCells.get(snakeID).addLast(nextCell);
+		snakeCells.get(snakeID).getFirst().becomeOpen();
+		snakeCells.get(snakeID).removeFirst();
+	}
 
 	public BoardCell getNorthNeighbor(BoardCell cell) {
-		return this.getCell(cell.getRow() - 1, cell.getColumn());
+		int newRow = cell.getRow() - 1;
+		int newCol = cell.getCol();
+		return this.getCell(newRow, newCol);
 	}
 
 	public BoardCell getSouthNeighbor(BoardCell cell) {
-		return this.getCell(cell.getRow() + 1, cell.getColumn());
+		int newRow = cell.getRow() + 1;
+		int newCol = cell.getCol();
+		return this.getCell(newRow, newCol);
 	}
 
 	public BoardCell getEastNeighbor(BoardCell cell) {
-		return this.getCell(cell.getRow(), cell.getColumn() + 1);
+		int newRow = cell.getRow();
+		int newCol = cell.getCol() + 1;
+		return this.getCell(newRow, newCol);
 	}
 
 	public BoardCell getWestNeighbor(BoardCell cell) {
-		return this.getCell(cell.getRow(), cell.getColumn() - 1);
+		int newRow = cell.getRow();
+		int newCol = cell.getCol() - 1;
+		return this.getCell(newRow, newCol);
 	}
 
-	public BoardCell getNorthNeighbor() {
-		return this.getNorthNeighbor(this.getSnakeHead());
+	public BoardCell getNorthNeighbor(int snakeID) {
+		return this.getNorthNeighbor(this.getSnakeHead(snakeID));
 	}
 
-	public BoardCell getSouthNeighbor() {
-		return this.getSouthNeighbor(this.getSnakeHead());
+	public BoardCell getSouthNeighbor(int snakeID) {
+		return this.getSouthNeighbor(this.getSnakeHead(snakeID));
 	}
 
-	public BoardCell getEastNeighbor() {
-		return this.getEastNeighbor(this.getSnakeHead());
+	public BoardCell getEastNeighbor(int snakeID) {
+		return this.getEastNeighbor(this.getSnakeHead(snakeID));
 	}
 
-	public BoardCell getWestNeighbor() {
-		return this.getWestNeighbor(this.getSnakeHead());
+	public BoardCell getWestNeighbor(int snakeID) {
+		return this.getWestNeighbor(this.getSnakeHead(snakeID));
 	}
 
-	public BoardCell getNextCellInDir() {
-		return null;  // TODO
+	public BoardCell getNextCellInDir(int snakeID) {
+		switch (this.currentMode.get(snakeID)) {
+			case GOING_NORTH:
+				return this.getNorthNeighbor(snakeID);
+			case GOING_SOUTH:
+				return this.getSouthNeighbor(snakeID);
+			case GOING_EAST:
+				return this.getEastNeighbor(snakeID);
+			case GOING_WEST:
+				return this.getWestNeighbor(snakeID);
+			default:
+				return null;
+		}
 	}
 
-	public BoardCell[] getNeighbors(BoardCell center) {
-		BoardCell[] neighborsArray = {getNorthNeighbor(center), getSouthNeighbor(center),  getEastNeighbor(center), getWestNeighbor(center)};
-		return neighborsArray;
+	public ArrayList<BoardCell> getNeighbors(BoardCell center) {
+		ArrayList<BoardCell> neighbors = new ArrayList<BoardCell>();
+		neighbors.add(getNorthNeighbor(center));
+		neighbors.add(getSouthNeighbor(center));
+		neighbors.add(getEastNeighbor(center));
+		neighbors.add(getWestNeighbor(center));
+		return neighbors;
 	}
-
-	public BoardCell getRandomNeighboringCell(BoardCell start) {
-		BoardCell[] neighborsArray = getNeighbors(start);
-		for (BoardCell mc : neighborsArray) {
-			if (mc.isOpen()) {
-				return mc;
+	
+	// used by random-controlled snake
+	public BoardCell getNeighboringCell(BoardCell start) {
+		ArrayList<BoardCell> neighbors = getNeighbors(start);
+		ArrayList<BoardCell> options = new ArrayList<BoardCell>();
+		for (BoardCell mc : neighbors) {
+			if (mc != null && mc.isOpen()) {
+				options.add(mc);
 			}
 		}
-		return neighborsArray[0];
+		if (options.size() == 0) {
+			return neighbors.get(0);
+		}
+		Collections.shuffle(options);
+		return options.get(0);
 	}
 
-	public void setDirectionNorth() {
-		this.currentMode = SnakeMode.GOING_NORTH;
+	public void setMode(int snakeID, SnakeMode mode) {
+		if (this.currentMode.get(snakeID).equals(GOING_NORTH) && mode.equals(GOING_SOUTH)) return;
+		if (this.currentMode.get(snakeID).equals(GOING_EAST) && mode.equals(GOING_WEST)) return;
+		if (this.currentMode.get(snakeID).equals(GOING_SOUTH) && mode.equals(GOING_NORTH)) return;
+		if (this.currentMode.get(snakeID).equals(GOING_WEST) && mode.equals(GOING_EAST)) return;
+		this.currentMode.set(snakeID, mode);
 	}
 
-	public void setDirectionSouth() {
-		this.currentMode = SnakeMode.GOING_SOUTH;
+	public void setStartDirection(int snakeID) {
+		if (snakeID == 0) {
+			this.setMode(snakeID, GOING_EAST);
+		} else if (snakeID == 1) {
+			this.setMode(snakeID, RANDOM_MODE);
+		} else {
+			this.setMode(snakeID, BFS_MODE);
+		}
 	}
 
-	public void setDirectionEast() {
-		this.currentMode = SnakeMode.GOING_EAST;
+	public void setStartScore(int snakeID) {
+		this.scores.set(snakeID, 0);
 	}
 
-	public void setDirectionWest() {
-		this.currentMode = SnakeMode.GOING_WEST;
+	public BoardCell getSnakeHead(int snakeID) {
+		return this.getSnakeKth(snakeID, 0);
 	}
 
-	public void setMode_AI() {
-		this.currentMode = SnakeMode.AI_MODE;
+	public BoardCell getSnakeTail(int snakeID) {
+		return this.getSnakeKth(snakeID, -1);
 	}
 
-	public void setStartDirection() {
-		this.setDirectionEast();
+	public BoardCell getSnakeNeck(int snakeID) {
+		return this.getSnakeKth(snakeID, 1);
 	}
 
-	public BoardCell getSnakeHead() {
-		return this.snakeCells.peekLast();
-	}
-
-	public BoardCell getSnakeTail() {
-		return this.snakeCells.peekFirst();
-	}
-
-	public BoardCell getSnakeNeck() {
-		int lastSnakeCellIndex = this.snakeCells.size() - 1;
-		return this.snakeCells.get(lastSnakeCellIndex - 1);
+	public BoardCell getSnakeKth(int snakeID, int k) {
+		// count from head
+		int snakeLength = getSnakeLength(snakeID);
+		int rev = snakeLength - k - 1;
+		rev = (rev % snakeLength + snakeLength) % snakeLength;
+		return this.snakeCells.get(snakeID).get(rev);
 	}
 
 	public Color getCellColor(int row, int col) {
@@ -217,56 +407,251 @@ public class SnakeProData {
 		return cell.getCellColor();
 	}
 
-	public BoardCell getNextCellFromBFS() {
+	public void computeBFS(int snakeID) {
+		this.nextMove.set(snakeID, null);
+		for (BoardCell[] row : boardCells2D) {
+			for (BoardCell cell : row) {
+				cell.setParent(snakeID, null);
+			}
+		}
 		// Initialize the search.
-		this.resetCellsForNextSearch();
 		Queue<BoardCell> cellsToSearch = new LinkedList<BoardCell>();
-		BoardCell snakeHead = this.getSnakeHead();
-		snakeHead.setAddedToSearchList();
-		cellsToSearch.add(snakeHead);
-		
-		BoardCell closestFoodCell = null;
-		
-		// Search!
-		// TODO: Make sure you understand the code above and implement yours!
-		
-		// Note: we encourage you to write the helper method 
-		// getFirstCellInPath below to do the backtracking to calculate the next cell!
+		ArrayList<BoardCell[]> candidate = new ArrayList<BoardCell[]>();
+		this.resetCellsForNextSearch();
 
-		// If the search fails, just move somewhere.
-		return this.getRandomNeighboringCell(snakeHead);
+		int curBest;
+		if (target.get(snakeID).isFood()) {
+			curBest = distanceTo(snakeID, target.get(snakeID));
+		} else {
+			curBest = 999999999;
+		}
+
+		getSnakeHead(snakeID).setAddedToSearchList();
+		cellsToSearch.add(getSnakeHead(snakeID));
+		
+		while (!cellsToSearch.isEmpty()) {
+			BoardCell searchCell = cellsToSearch.remove();
+			if (searchCell.isFood() && (!target.get(snakeID).isFood() || searchCell.equals(target.get(snakeID)))) {
+				BoardCell curCell = searchCell;
+				int distance = distanceTo(snakeID, curCell);
+				if (distance <= curBest && countSpace(curCell) >= snakeCells.size()) {
+					if (distance < curBest) {
+						candidate.clear();
+						curBest = distance;
+					}
+					while (!curCell.getParent(snakeID).equals(getSnakeHead(snakeID))) {
+						curCell = curCell.getParent(snakeID);
+					}
+					candidate.add(new BoardCell[]{curCell, searchCell});
+				}
+			}
+			for (BoardCell neighbor : getNeighbors(searchCell)) {
+				if ((neighbor.isOpen() || neighbor.isFood()) && !neighbor.inSearchListAlready()) {
+					neighbor.setAddedToSearchList();
+					neighbor.setParent(snakeID, searchCell);
+					cellsToSearch.add(neighbor);
+				}
+			}
+		}
+		BoardCell finalResult;
+		if (!candidate.isEmpty()) {
+			Collections.shuffle(candidate);
+			BoardCell[] result = candidate.get(0);
+			finalResult = result[0];
+			target.set(snakeID, result[1]);
+			nextMoveBFS.set(snakeID, true);
+		} else {
+			finalResult = getNeighboringCell(getSnakeHead(snakeID));
+			target.set(snakeID, finalResult);
+		}
+		nextMove.set(snakeID, finalResult);
+		debugCycle ++;
+		if (debugCycle % 100 == 0) {
+			if (countSpace(finalResult) >= snakeCells.size()) {
+				System.out.print("[CHILLING] ");
+			} else {
+				System.out.print("[SHITTING] ");
+			}
+			System.out.println("Moving to " + finalResult + " with " + countSpace(finalResult) + " empty spaces.");
+		}
 	}
 
-	// Find cell whose parent is the snake head
-	private BoardCell getFirstCellInPath(BoardCell start) {
-		// TODO: Implement
+	public BoardCell getNextCellFromBFS(int snakeID) {
+		computeBFS(snakeID);
+		return nextMove.get(snakeID);
+	}
+
+	public BoardCell getTargetCell(int snakeID) {
+		if (nextMoveBFS.get(snakeID)) {
+			return target.get(snakeID);
+		}
 		return null;
 	}
 
+	private int distanceTo(int snakeID, BoardCell cell) {
+		int verticalDistance = Math.abs(getSnakeHead(snakeID).getRow() - cell.getRow());
+		int horizontalDistance = Math.abs(getSnakeHead(snakeID).getCol() - cell.getCol());
+		if (isWrap) {
+			horizontalDistance = Math.min(horizontalDistance, getNumCols() - 2 - horizontalDistance);
+			verticalDistance = Math.min(verticalDistance, getNumCols() - 2 - verticalDistance); 
+		}
+		return horizontalDistance + verticalDistance;
+	}
+
+	public ArrayList<BoardCell> floodFill(BoardCell cell) {
+		// count number of neighboring cells
+		int cnt = 0;
+		HashMap<BoardCell, Boolean> mp = new HashMap<BoardCell, Boolean>();
+		ArrayList<BoardCell> searchQueue = new ArrayList<BoardCell>();
+		searchQueue.add(cell);
+		mp.put(cell, true);
+		while (cnt < searchQueue.size()) {
+			BoardCell searchCell = searchQueue.get(cnt);
+			for (BoardCell neighbor : getNeighbors(searchCell)) {
+				if (neighbor == null) {
+					continue;
+				}
+				if (!neighbor.isOpen() && !neighbor.isFood()) {
+					continue;
+				}
+				if (mp.containsKey(neighbor)) {
+					continue;
+				}
+				mp.put(neighbor, true);
+				searchQueue.add(neighbor);
+			}
+			cnt ++;
+		}
+		return searchQueue;
+	}
+	
+	public int countSpace(BoardCell cell) {
+		return floodFill(cell).size();
+	}
+
+	public int[][][] voronoiFill() {
+		int[][][] voronoiDistance = new int[NUM_CELLS_TALL][NUM_CELLS_WIDE][SNAKES];
+		for (int snakeID = 0; snakeID < SNAKES; snakeID ++) {
+			int cnt = 0;
+			HashMap<BoardCell, Boolean> mp = new HashMap<BoardCell, Boolean>();
+			ArrayList<SearchInfo> searchQueue = new ArrayList<SearchInfo>();
+			BoardCell headCell = this.getSnakeHead(snakeID);
+			searchQueue.add(new SearchInfo(headCell, 0));
+			mp.put(headCell, true);
+			while (cnt < searchQueue.size()) {
+				SearchInfo info = searchQueue.get(cnt);
+				BoardCell cell = info.getCell();
+				int dist = info.getDist();
+				voronoiDistance[cell.getRow()][cell.getCol()][snakeID] = dist;
+				for (BoardCell neighbor : getNeighbors(cell)) {
+					if (neighbor == null) {
+						continue;
+					}
+					if (!neighbor.isOpen() && !neighbor.isFood()) {
+						continue;
+					}
+					if (mp.containsKey(neighbor)) {
+						continue;
+					}
+					mp.put(neighbor, true);
+					searchQueue.add(new SearchInfo(neighbor, dist + 1));
+				}
+				cnt ++;
+			}
+		}
+		return voronoiDistance;
+	}
+
 	public void resetCellsForNextSearch() {
-		for (BoardCell[] row : this.boardCells2D) {
-			for (BoardCell cell : row) {
-				cell.clear_RestartSearch();
+		for (int row = 0; row < this.getNumRows(); row ++) {
+			for (int col = 0; col < this.getNumCols(); col ++) {
+				boardCells2D[row][col].restartSearch();
 			}
 		}
 	}
 
-	// TODO: helper method for reverse
-	// Step 1: unlabel the head
-	// Step 2: reverse the body parts
-	// Step 3: relabel the head
-	// Step 4: calculate the new direction after reversing!
-
-	public void revSnake() {
-
+	public void updateSnakeID() {
+		for (int snakeID = 0; snakeID < SNAKES; snakeID ++) {
+			LinkedList<BoardCell> snake = snakeCells.get(snakeID);
+			for (int index = 0; index < snake.size(); index ++) {
+				snake.get(index).setID(index);
+				snake.get(index).setSnakeID(snakeID);
+			}
+		}
+	}
+	
+	private void updateSnakeDirection(int snakeID) {
+		BoardCell neck = this.getSnakeNeck(snakeID);
+		if (this.getNorthNeighbor(snakeID).equals(neck)) currentMode.set(snakeID, GOING_SOUTH);
+		else if (this.getSouthNeighbor(snakeID).equals(neck)) currentMode.set(snakeID, GOING_NORTH);
+		else if (this.getEastNeighbor(snakeID).equals(neck)) currentMode.set(snakeID, GOING_WEST);
+		else if (this.getWestNeighbor(snakeID).equals(neck)) currentMode.set(snakeID, GOING_EAST);
+		else System.out.println("Weird direction");
 	}
 
-	public void setGameOver() {
-		this.gameOver = true;
+	public void reverseSnake(int snakeID) {
+		this.getSnakeHead(snakeID).becomeBody();
+		this.getSnakeTail(snakeID).becomeHead();
+		LinkedList<BoardCell> revSnake = new LinkedList<BoardCell>();
+		Iterator<BoardCell> it = snakeCells.get(snakeID).descendingIterator();
+		while (it.hasNext()) {
+			BoardCell snakeCell = it.next();
+			revSnake.add(snakeCell);
+		}
+		snakeCells.set(snakeID, revSnake);
+		updateSnakeDirection(snakeID);
+	}
+
+	public void setGameOver(int snakeID) {
+		this.gameOver.set(snakeID, true);
+	}
+
+	public boolean getGameOver(int snakeID) {
+		return this.gameOver.get(snakeID);
 	}
 
 	public boolean getGameOver() {
-		return this.gameOver;
+		int deadSnakes = 0;
+		for (int snakeID = 0; snakeID < SNAKES; snakeID ++) {
+			if (this.getGameOver(snakeID)) {
+				deadSnakes ++;
+			}
+		}
+		return deadSnakes == Math.max(1, SNAKES - 1);
+	}
+
+	public String getCode() {
+		return this.typedCode;
+	}
+
+	public void setCode(String typedCode) {
+		this.typedCode = typedCode;
+	}
+
+	public void checkCode() {
+		if (this.typedCode.equals(CHEAT_CODE)) {
+			this.rainbowCheat = true;
+		}
+	}
+
+	public boolean getRainbow() {
+		return this.rainbowCheat;
+	}
+
+	public void toggleWrap() {
+		this.isWrap = !this.isWrap;
+	}
+
+	public boolean getWrap() {
+		return this.isWrap;
+	}
+
+	public String getScores() {
+		ArrayList<String> res = new ArrayList<String>();
+		for (int snakeID = 0; snakeID < SNAKES; snakeID ++) {
+			res.add(String.valueOf(this.getScore(snakeID)));
+		}
+		return String.join(" - ", res);
 	}
 
 	/* ---------------------- */
@@ -279,20 +664,31 @@ public class SnakeProData {
 
 	// Constructor used exclusively for testing!
 	public SnakeProData(TestGame gameNum) {
+		this.isWrap = false;
 		this.boardCells2D = new BoardCell[6][6];
-		this.addWalls();
 		this.fillRemainingCells();
+
+		this.currentMode.add(GOING_EAST);
+		this.snakeCells.add(new LinkedList<BoardCell>());
+		this.scores.add(0);
+		this.target.add(new BoardCell(-1, -1, OPEN));
+		this.gameOver.add(false);
+		this.nextMove.add(null);
+		this.nextMoveBFS.add(false);
+
 		if (gameNum.snakeAtStart()) {
 			this.testing_snakeAtStartLocation(gameNum);
-			this.setDirectionEast();
+			this.setMode(0, GOING_EAST);
 		} else {
 			this.testing_snakeNotAtStartLocation(gameNum);
 		}
 
+		this.addWalls();
+		this.fillRemainingCells();
 	}
 
 	private void testing_snakeAtStartLocation(TestGame gameNum) {
-		this.placeSnakeAtStartLocation();
+		this.setStartLocation(0);
 		if (gameNum == TestGame.G1) {
 			this.getCell(1, 3).becomeFood();
 		} else if (gameNum == TestGame.G2) {
@@ -323,10 +719,10 @@ public class SnakeProData {
 		}
 		// Add all food to the food cells
 		int height = this.getNumRows();
-		int width = this.getNumColumns();
+		int width = this.getNumCols();
 		for (int row = 0; row < height; row++) {
-			for (int column = 0; column < width; column++) {
-				BoardCell cell = this.getCell(row, column);
+			for (int col = 0; col < width; col++) {
+				BoardCell cell = this.getCell(row, col);
 				if (cell.isFood()) {
 					this.foodCells.add(cell);
 				}
@@ -339,9 +735,9 @@ public class SnakeProData {
 			BoardCell body2 = this.getCell(2, 3);
 			BoardCell body1 = this.getCell(2, 2);
 			BoardCell head = this.getCell(2, 1);
-			this.snakeCells.add(body2);
-			this.snakeCells.add(body1);
-			this.snakeCells.add(head);
+			snakeCells.get(0).add(body2);
+			snakeCells.get(0).add(body1);
+			snakeCells.get(0).add(head);
 			head.becomeHead();
 			body2.becomeBody();
 			body1.becomeBody();
@@ -349,9 +745,9 @@ public class SnakeProData {
 			BoardCell body2 = this.getCell(3, 2);
 			BoardCell body1 = this.getCell(2, 2);
 			BoardCell head = this.getCell(2, 1);
-			this.snakeCells.add(body2);
-			this.snakeCells.add(body1);
-			this.snakeCells.add(head);
+			snakeCells.get(0).add(body2);
+			snakeCells.get(0).add(body1);
+			snakeCells.get(0).add(head);
 			head.becomeHead();
 			body2.becomeBody();
 			body1.becomeBody();
@@ -359,9 +755,9 @@ public class SnakeProData {
 			BoardCell body2 = this.getCell(2, 2);
 			BoardCell body1 = this.getCell(3, 2);
 			BoardCell head = this.getCell(3, 1);
-			this.snakeCells.add(body2);
-			this.snakeCells.add(body1);
-			this.snakeCells.add(head);
+			snakeCells.get(0).add(body2);
+			snakeCells.get(0).add(body1);
+			snakeCells.get(0).add(head);
 			head.becomeHead();
 			body2.becomeBody();
 			body1.becomeBody();
@@ -369,9 +765,9 @@ public class SnakeProData {
 			BoardCell body2 = this.getCell(3, 2);
 			BoardCell body1 = this.getCell(3, 3);
 			BoardCell head = this.getCell(3, 4);
-			this.snakeCells.add(body2);
-			this.snakeCells.add(body1);
-			this.snakeCells.add(head);
+			snakeCells.get(0).add(body2);
+			snakeCells.get(0).add(body1);
+			snakeCells.get(0).add(head);
 			head.becomeHead();
 			body2.becomeBody();
 			body1.becomeBody();
@@ -381,7 +777,7 @@ public class SnakeProData {
 	public String toString() {
 		String result = "";
 		for (int r = 0; r < this.getNumRows(); r++) {
-			for (int c = 0; c < this.getNumColumns(); c++) {
+			for (int c = 0; c < this.getNumCols(); c++) {
 				BoardCell cell = this.getCell(r, c);
 				result += cell.toStringType();
 			}
@@ -390,15 +786,17 @@ public class SnakeProData {
 		return result;
 	}
 	
-	public String toStringParents() {
+	public String toStringParents(int snakeId) {
 		String result = "";
 		for (int r = 0; r < this.getNumRows(); r++) {
-			for (int c = 0; c < this.getNumColumns(); c++) {
+			for (int c = 0; c < this.getNumCols(); c++) {
 				BoardCell cell = this.getCell(r, c);
-				result += cell.toStringParent() + "\t";
+				result += cell.toStringParent(snakeId) + "\t";
 			}
 			result += "\n";
 		}
 		return result;
 	}
+
+	private int debugCycle = 0;
 }

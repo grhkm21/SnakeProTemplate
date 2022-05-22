@@ -21,7 +21,7 @@ public class SnakeProDataTest_Neighbors {
 	@Test
 	public void test_NorthNeighborWithoutArgument() {
 		SnakeProData myData = new SnakeProData(TestGame.G1);
-		BoardCell neighborCell = myData.getNorthNeighbor();
+		BoardCell neighborCell = myData.getNorthNeighbor(0);
 		assertEquals("[0, 2, *]", neighborCell.toString());
 		// check they're the same object (Not a new Model.BoardCell!)
 		assertTrue(neighborCell == myData.getCell(0, 2));
@@ -39,7 +39,7 @@ public class SnakeProDataTest_Neighbors {
 	@Test
 	public void test_SouthNeighborWithoutArgument() {
 		SnakeProData myData = new SnakeProData(TestGame.G1);
-		BoardCell neighborCell = myData.getSouthNeighbor();
+		BoardCell neighborCell = myData.getSouthNeighbor(0);
 		assertEquals("[2, 2,  ]", neighborCell.toString());
 		// check they're the same object (Not a new Model.BoardCell!)
 		assertTrue(neighborCell == myData.getCell(2, 2));
@@ -56,7 +56,7 @@ public class SnakeProDataTest_Neighbors {
 	@Test
 	public void test_EastNeighborWithoutArgument() {
 		SnakeProData myData = new SnakeProData(TestGame.G1);
-		BoardCell neighborCell = myData.getEastNeighbor();
+		BoardCell neighborCell = myData.getEastNeighbor(0);
 		assertEquals("[1, 3, X]", neighborCell.toString());
 		// check they're the same object (Not a new Model.BoardCell!)
 		assertTrue(neighborCell == myData.getCell(1, 3));
@@ -74,7 +74,7 @@ public class SnakeProDataTest_Neighbors {
 	@Test
 	public void test_WestNeighborWithoutArgument() {
 		SnakeProData myData = new SnakeProData(TestGame.G1);
-		BoardCell neighborCell = myData.getWestNeighbor();
+		BoardCell neighborCell = myData.getWestNeighbor(0);
 		assertEquals("[1, 1, B]", neighborCell.toString());
 		// check they're the same object (Not a new Model.BoardCell!)
 		assertTrue(neighborCell == myData.getCell(1, 1));

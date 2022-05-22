@@ -1,73 +1,122 @@
 package Model;
 
+import static Model.CellType.*;
+import static Model.Preferences.*;
 import java.awt.Color;
+import java.util.ArrayList;
 
 public class BoardCell {
 	private int row;
 	private int col;
+	// when it is snake, tail = 0, head = len - 1
+	// when it is wall, clockwise from top left is 0 to len - 1
+	private int snakeID = -1;
+	private int id = -1;
 
 	private CellType myCellType;
 
 	private boolean addedToSearchList = false; 
-	private BoardCell parent = null; 
+	private ArrayList<BoardCell> parent = new ArrayList<BoardCell>();
 
 	public BoardCell(int row, int col, CellType myCellType) {
 		this.row = row;
 		this.col = col;
 		this.myCellType = myCellType;
+		this.resetParent();
+	}
+
+	public BoardCell(int row, int col, CellType myCellType, int id) {
+		if (myCellType != WALL) {
+			throw new IllegalArgumentException("Wrong constructor used!");
+		}
+		this.row = row;
+		this.col = col;
+		this.myCellType = myCellType;
+		this.id = id;
+		this.resetParent();
 	}
 
 	public int getRow() {
 		return this.row;
 	}
 
-	public int getColumn() {
+	public int getCol() {
 		return this.col;
 	}
 
+	public int getID() {
+		return this.id;
+	}
+
+	public int getSnakeID() {
+		return this.snakeID;
+	}
+
 	public boolean isWall() {
-		return this.myCellType == CellType.WALL;
+		return this.myCellType == WALL;
 	}
 
 	public boolean isOpen() {
-		return this.myCellType == CellType.OPEN;
+		return this.myCellType == OPEN;
 	}
 
 	public boolean isFood() {
-		return this.myCellType == CellType.FOOD;
+		return this.myCellType == FOOD;
 	}
 
 	public boolean isBody() {
-		return this.myCellType == CellType.BODY;
+		return this.myCellType == BODY;
 	}
 
 	public boolean isHead() {
-		return this.myCellType == CellType.HEAD;
+		return this.myCellType == HEAD;
+	}
+
+	public boolean isSnake() {
+		return this.isBody() || this.isHead();
 	}
 
 	public Color getCellColor() {
-		if (this.isWall()) return Preferences.COLOR_WALL;
-		if (this.isOpen()) return Preferences.COLOR_OPEN;
-		if (this.isFood()) return Preferences.COLOR_FOOD;
-		if (this.isBody()) return Preferences.COLOR_BODY;
-		if (this.isHead()) return Preferences.COLOR_HEAD;
-		return Preferences.COLOR_OPEN;
+		if (this.isWall()) return null;
+		if (this.isOpen()) return COLOR_OPEN;
+		if (this.isFood()) return COLOR_FOOD;
+		if (this.isBody()) return null;
+		if (this.isHead()) return null;
+		return null;
+	}
+
+	public void setID(int id) {
+		this.id = id;
+	}
+
+	public void setSnakeID(int snakeID) {
+		this.snakeID = snakeID;
 	}
 
 	public void becomeFood() {
-		this.myCellType = CellType.FOOD;
+		this.myCellType = FOOD;
 	}
 
 	public void becomeOpen() {
-		this.myCellType = CellType.OPEN;
+		this.myCellType = OPEN;
 	}
 
 	public void becomeHead() {
-		this.myCellType = CellType.HEAD;
+		this.myCellType = HEAD;
 	}
 
 	public void becomeBody() {
-		this.myCellType = CellType.BODY;
+		this.myCellType = BODY;
+	}
+
+	public void becomeHead(int snakeID) {
+		this.myCellType = HEAD;
+		this.snakeID = snakeID;
+	}
+
+	public void becomeBody(int snakeID) {
+		this.myCellType = BODY;
+		this.snakeID = snakeID;
 	}
 
 	public void setAddedToSearchList() {
@@ -78,17 +127,29 @@ public class BoardCell {
 		return this.addedToSearchList;
 	}
 
-	public void clear_RestartSearch() {
+	public void restartSearch() {
 		this.addedToSearchList = false;
-		this.parent = null;
 	}
 
-	public void setParent(BoardCell p) {
-		this.parent = p;
+	public void resetParent() {
+		this.parent = new ArrayList<BoardCell>();
+		for (int snakeID = 0; snakeID < SNAKES; snakeID ++) {
+			this.parent.add(null);
+		}
+	}
+
+	public void setParent(int snakeID, BoardCell p) {
+		if (this.parent == null) {
+			resetParent();
+		}
+		this.parent.set(snakeID, p);
 	}
 	
-	public BoardCell getParent() {
-		return this.parent;
+	public BoardCell getParent(int snakeID) {
+		if (this.parent == null) {
+			resetParent();
+		}
+		return this.parent.get(snakeID);
 	}
 
 	/* ---------------------------- */
@@ -103,11 +164,11 @@ public class BoardCell {
 		return this.myCellType.getDisplayChar();
 	}
 
-	public String toStringParent(){
-		if (this.parent == null) {
+	public String toStringParent(int snakeID) {
+		if (this.parent == null || this.parent.get(snakeID) == null) {
 			return "[null]";
 		} else {
-			return "[" + this.parent.row + ", " + this.parent.col + "]";
+			return "[" + this.parent.get(snakeID).row + ", " + this.parent.get(snakeID).col + "]";
 		}
 	}
 }

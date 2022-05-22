@@ -47,9 +47,9 @@ public class BoardCellTest {
 	}
 
 	@Test
-	public void testGetColumn() {
+	public void testGetCol() {
 		BoardCell wallCell = new BoardCell(10, 15, CellType.WALL);
-		assertEquals(15, wallCell.getColumn());
+		assertEquals(15, wallCell.getCol());
 	}
 	// Tests for type
 	@Test
@@ -75,7 +75,7 @@ public class BoardCellTest {
 	public void testType_Food() {
 		BoardCell foodCell = new BoardCell(10, 15, CellType.FOOD);
 		assertFalse(foodCell.isWall());
-		assertTrue(foodCell.isOpen()); // Food is open
+		assertFalse(foodCell.isOpen());
 		assertTrue(foodCell.isFood());
 		assertFalse(foodCell.isBody());
 		assertFalse(foodCell.isHead());
@@ -98,12 +98,12 @@ public class BoardCellTest {
 		assertFalse(headCell.isBody());
 		assertTrue(headCell.isHead());
 	}
-	// Test color
-	@Test
-	public void testCellColor_Wall() {
-		BoardCell wallCell = new BoardCell(10, 15, CellType.WALL);
-		assertEquals(Preferences.COLOR_WALL, wallCell.getCellColor());
-	}
+	// These tests are not used as snake has gradient colors.
+	// @Test
+	// public void testCellColor_Wall() {
+	// 	BoardCell wallCell = new BoardCell(10, 15, CellType.WALL);
+	// 	assertEquals(Preferences.COLOR_WALL, wallCell.getCellColor());
+	// }
 	@Test
 	public void testCellColor_Open() {
 		BoardCell openCell = new BoardCell(10, 15, CellType.OPEN);
@@ -114,16 +114,16 @@ public class BoardCellTest {
 		BoardCell foodCell = new BoardCell(10, 15, CellType.FOOD);
 		assertEquals(Preferences.COLOR_FOOD, foodCell.getCellColor());
 	}
-	@Test
-	public void testCellColor_Body() {
-		BoardCell bodyCell = new BoardCell(10, 15, CellType.BODY);
-		assertEquals(Preferences.COLOR_BODY, bodyCell.getCellColor());
-	}
-	@Test
-	public void testCellColor_Head() {
-		BoardCell headCell = new BoardCell(10, 15, CellType.HEAD);
-		assertEquals(Preferences.COLOR_HEAD, headCell.getCellColor());
-	}
+	// @Test
+	// public void testCellColor_Body() {
+	// 	BoardCell bodyCell = new BoardCell(10, 15, CellType.BODY);
+	// 	assertEquals(Preferences.COLOR_TAIL, bodyCell.getCellColor());
+	// }
+	// @Test
+	// public void testCellColor_Head() {
+	// 	BoardCell headCell = new BoardCell(10, 15, CellType.HEAD);
+	// 	assertEquals(Preferences.COLOR_HEAD, headCell.getCellColor());
+	// }
 	
 	
 	/************************************
@@ -175,7 +175,7 @@ public class BoardCellTest {
 		BoardCell cell = new BoardCell(10, 15, CellType.OPEN);
 		cell.becomeFood();
 		assertFalse(cell.isWall());
-		assertTrue(cell.isOpen());
+		assertFalse(cell.isOpen());
 		assertTrue(cell.isFood());
 		assertFalse(cell.isBody());
 		assertFalse(cell.isHead());
