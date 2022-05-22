@@ -25,11 +25,7 @@ public class SnakeProDataTest_AdvancePede {
 	@Test
 	public void test_noFoodEaten() {
 		SnakeProBrain brain = new SnakeProBrain(TestGame.G2);
-<<<<<<< HEAD
 		brain.updateSnake(0);
-=======
-		brain.updateSnake();
->>>>>>> 4a7f241022243d75c22b72dcf552ca46d2f00e48
 		String boardString = brain.draw.data.toString();
 		String correctBoardString = "******\n" + "* BH *\n" + "* X  *\n"
 				+ "*    *\n" + "*    *\n" + "******\n";

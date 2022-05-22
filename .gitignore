@@ -1,4 +1,4 @@
-/build/Controller
-/build/Model
-/build/View
-/build/test
+/build/Controller/*
+/build/Model/*
+/build/View/*
+/build/test/*
